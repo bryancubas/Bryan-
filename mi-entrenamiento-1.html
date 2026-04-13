@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Mi Entreno"/>
+<title>Mi Plan de Entrenamiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pink:   #c04060;
+    --purple: #a83890;
+    --violet: #7840a8;
+    --bg:     #faf7f5;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: #2a1a1a;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #c04060, #a83890, #7840a8);
+    padding: 32px 20px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content:''; position:absolute; top:-50px; left:-50px;
+    width:200px; height:200px; border-radius:50%;
+    background:rgba(255,255,255,0.07);
+  }
+  .header::after {
+    content:''; position:absolute; bottom:-40px; right:-30px;
+    width:160px; height:160px; border-radius:50%;
+    background:rgba(255,255,255,0.05);
+  }
+  .header-emoji { font-size:36px; margin-bottom:6px; }
+  .header h1 { color:#fff; font-family:'Lora',serif; font-size:22px; font-weight:700; letter-spacing:0.3px; }
+  .header p  { color:rgba(255,255,255,0.75); font-size:13px; font-style:italic; margin-top:5px; }
+  .progress-wrap { max-width:320px; margin:16px auto 0; }
+  .progress-labels { display:flex; justify-content:space-between; color:rgba(255,255,255,0.8); font-size:11px; margin-bottom:5px; }
+  .progress-bar { background:rgba(255,255,255,0.2); border-radius:20px; height:8px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,#ffd6e8,#fff); width:0%; transition:width .5s ease; }
+  .progress-pct  { color:rgba(255,255,255,0.7); font-size:11px; margin-top:3px; text-align:right; }
+
+  /* ── TABS ── */
+  .tabs { display:flex; background:#fff; box-shadow:0 1px 8px rgba(0,0,0,0.07); position:sticky; top:0; z-index:10; }
+  .tab-btn {
+    flex:1; padding:13px 4px; border:none; cursor:pointer;
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
+    color:#9a6070; background:transparent;
+    border-bottom:2px solid #f0e0e5;
+    transition:all .2s; white-space:nowrap;
+  }
+  .tab-btn.active {
+    background:linear-gradient(135deg, #c04060, #a83890);
+    color:#fff; border-bottom:none;
+  }
+
+  /* ── CONTENT ── */
+  .content { padding:18px 14px 48px; max-width:520px; margin:0 auto; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* ── DAY SELECTOR ── */
+  .days-row { display:flex; gap:7px; overflow-x:auto; padding-bottom:6px; margin-bottom:16px; scrollbar-width:none; }
+  .days-row::-webkit-scrollbar { display:none; }
+  .day-pill {
+    min-width:65px; padding:9px 6px; border-radius:14px; border:none;
+    cursor:pointer; font-family:'Inter',sans-serif; font-weight:700; font-size:11px;
+    color:#9a7080; background:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,0.06);
+    transition:all .25s; flex-shrink:0; text-align:center;
+  }
+  .day-pill .pill-emoji { font-size:18px; margin-bottom:2px; }
+  .day-pill.active { color:#fff; transform:translateY(-2px); }
+
+  /* ── DAY HEADER ── */
+  .day-header {
+    border-radius:16px; padding:14px 16px; margin-bottom:14px;
+    border-left:4px solid currentColor;
+  }
+  .day-header h2 { font-family:'Lora',serif; font-size:18px; color:#2a1a1a; margin-bottom:2px; }
+  .day-header .sub { font-size:12px; color:#8a6070; font-style:italic; }
+  .day-header .note { font-size:12px; font-weight:600; margin-top:8px; }
+
+  /* ── EXERCISE CARD ── */
+  .ex-list { display:flex; flex-direction:column; gap:10px; }
+  .ex-card {
+    background:#fff; border-radius:18px; padding:14px 15px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+    border:1.5px solid rgba(0,0,0,0.07);
+    transition:all .3s;
+  }
+  .ex-card.done { background:#f2f2f2; opacity:.55; }
+  .ex-card-inner { display:flex; justify-content:space-between; align-items:flex-start; }
+  .ex-left { flex:1; }
+  .ex-name-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .ex-num {
+    color:#fff; border-radius:7px; font-size:11px; font-weight:700;
+    padding:2px 8px; flex-shrink:0;
+  }
+  .ex-name { font-weight:700; font-size:14px; color:#2a1a1a; }
+  .ex-card.done .ex-name { text-decoration:line-through; color:#aaa; }
+  .ex-stats { display:flex; gap:7px; margin-bottom:9px; flex-wrap:wrap; }
+  .stat-pill { border-radius:10px; padding:5px 11px; text-align:center; }
+  .stat-val  { font-size:14px; font-weight:700; color:#2a1a1a; }
+  .stat-lbl  { font-size:10px; color:#8a6070; }
+  .ex-tip { background:#fdf2f4; border-radius:9px; padding:7px 11px; font-size:12px; color:#7a5060; line-height:1.55; }
+
+  /* ── CHECK BUTTON ── */
+  .check-btn {
+    margin-left:10px; width:32px; height:32px; border-radius:50%;
+    border:2px solid rgba(0,0,0,0.15); background:transparent;
+    cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; color:#fff; transition:all .2s;
+  }
+  .check-btn.done { border-color:transparent; }
+
+  /* ── REST CARD ── */
+  .rest-card {
+    margin-top:16px; background:#eaf5ec; border-radius:16px;
+    padding:18px; text-align:center;
+  }
+  .rest-card p { color:#4a7a52; font-size:13px; font-style:italic; line-height:1.55; margin-top:8px; }
+
+  /* ── TIPS ── */
+  .tip-card {
+    background:#fff; border-radius:16px; padding:14px 16px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+    display:flex; gap:14px; align-items:center; margin-bottom:11px;
+  }
+  .tip-icon { font-size:26px; flex-shrink:0; }
+  .tip-text { font-size:13px; color:#5a3040; line-height:1.55; }
+  .nutrition-card {
+    background:linear-gradient(135deg,#fce8ec,#f5e8fa);
+    border-radius:18px; padding:18px; margin-top:20px;
+  }
+  .nutrition-card h3 { font-family:'Lora',serif; color:#a83890; font-size:15px; margin-bottom:14px; }
+  .nut-row { padding:9px 0; border-bottom:1px solid rgba(168,56,144,0.12); }
+  .nut-row:last-child { border-bottom:none; }
+  .nut-title { font-weight:700; font-size:13px; color:#2a1a1a; }
+  .nut-desc  { font-size:12px; color:#7a5070; margin-top:2px; line-height:1.4; }
+
+  /* ── MOTIVATION ── */
+  .quote-card {
+    background:linear-gradient(135deg,#c04060,#a83890,#7840a8);
+    border-radius:22px; padding:28px; text-align:center;
+    box-shadow:0 8px 28px rgba(192,64,96,0.28);
+    margin-bottom:18px;
+  }
+  .quote-emoji { font-size:36px; margin-bottom:14px; }
+  .quote-text  { color:#fff; font-family:'Lora',serif; font-size:16px; line-height:1.75; font-style:italic; margin-bottom:16px; }
+  .quote-btn {
+    background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.4);
+    color:#fff; border-radius:20px; padding:8px 20px;
+    cursor:pointer; font-size:12px; font-family:'Inter',sans-serif;
+  }
+  .reminder-card {
+    background:#fff; border-radius:18px; padding:18px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:14px;
+  }
+  .reminder-card h3 { font-family:'Lora',serif; color:#c04060; font-size:15px; margin-bottom:13px; }
+  .reminder-row { font-size:13px; color:#6a3050; padding:9px 0; border-bottom:1px solid #f5e0e8; line-height:1.5; }
+  .reminder-row:last-child { border-bottom:none; }
+  .recovery-card {
+    background:linear-gradient(135deg,#eaf5ec,#f0faf2);
+    border-radius:18px; padding:16px;
+  }
+  .recovery-card h3 { font-family:'Lora',serif; color:#4a8a52; font-size:15px; margin-bottom:11px; }
+  .recovery-row { font-size:12px; color:#3a6a42; padding:7px 0; border-bottom:1px solid rgba(74,138,82,0.15); line-height:1.45; }
+  .recovery-row:last-child { border-bottom:none; }
+
+  /* ── FOOTER ── */
+  .footer { text-align:center; padding:10px; color:#c04060; font-size:12px; font-style:italic; }
+
+  /* ── SECTION TITLES ── */
+  .section-title { font-family:'Lora',serif; color:#c04060; font-size:20px; margin-bottom:4px; }
+  .section-sub   { color:#9a6070; font-style:italic; margin-bottom:18px; font-size:13px; }
+
+  /* scrollbar */
+  * { scrollbar-width:thin; scrollbar-color:rgba(192,64,96,0.2) transparent; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-emoji">🌸</div>
+  <h1>Tu Plan de Entrenamiento</h1>
+  <p>Tren inferior · 5 días · Hecho para ti ❤️</p>
+  <div class="progress-wrap">
+    <div class="progress-labels">
+      <span>Progreso semanal</span>
+      <span id="prog-count">0/22</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="prog-fill"></div>
+    </div>
+    <div class="progress-pct" id="prog-pct">0% completado</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('plan',this)">📋 Plan</button>
+  <button class="tab-btn"        onclick="switchTab('tips',this)">✨ Consejos</button>
+  <button class="tab-btn"        onclick="switchTab('motivation',this)">💫 Motivación</button>
+</div>
+
+<div class="content">
+
+  <!-- ══ PLAN PANEL ══ -->
+  <div class="panel active" id="panel-plan">
+
+    <div class="days-row" id="days-row"></div>
+    <div id="day-header-wrap"></div>
+    <div class="ex-list" id="ex-list"></div>
+    <div id="rest-note"></div>
+
+  </div>
+
+  <!-- ══ TIPS PANEL ══ -->
+  <div class="panel" id="panel-tips">
+    <h2 class="section-title">✨ Consejos Clave</h2>
+    <p class="section-sub">Pequeños detalles que hacen grandes diferencias.</p>
+
+    <div class="tip-card"><span class="tip-icon">📸</span><p class="tip-text">Fotos cada 2 semanas — misma hora, misma ropa. Verás los cambios que la báscula no muestra.</p></div>
+    <div class="tip-card"><span class="tip-icon">📏</span><p class="tip-text">Mide cadera y muslo una vez al mes. Las medidas dicen más que el peso.</p></div>
+    <div class="tip-card"><span class="tip-icon">📓</span><p class="tip-text">Anota cuánto levantas en cada sesión. Cuando ves progreso escrito, quieres más.</p></div>
+    <div class="tip-card"><span class="tip-icon">😴</span><p class="tip-text">Duerme 7–9 horas. Es cuando el músculo realmente crece, no en el gimnasio.</p></div>
+    <div class="tip-card"><span class="tip-icon">💧</span><p class="tip-text">Mínimo 2 litros de agua al día. Más en días de entreno. La deshidratación reduce la fuerza.</p></div>
+    <div class="tip-card"><span class="tip-icon">🥩</span><p class="tip-text">Proteína en cada comida. Pollo, huevo, yogur griego, atún. Tu músculo lo necesita para crecer.</p></div>
+    <div class="tip-card"><span class="tip-icon">⚖️</span><p class="tip-text">El peso puede quedarse igual y aún así tu cuerpo estar cambiando. Confía en las medidas y las fotos.</p></div>
+
+    <div class="nutrition-card">
+      <h3>🥗 Nutrición simple</h3>
+      <div class="nut-row"><div class="nut-title">Proteína</div><div class="nut-desc">~90–110g al día. Pollo, huevos, yogur griego, atún, proteína en polvo.</div></div>
+      <div class="nut-row"><div class="nut-title">Calorías</div><div class="nut-desc">Come bien, no de más ni de menos. Pequeño déficit = perder grasa sin perder músculo.</div></div>
+      <div class="nut-row"><div class="nut-title">Timing</div><div class="nut-desc">Carbohidratos antes y después del entreno. Proteína en cada comida.</div></div>
+      <div class="nut-row"><div class="nut-title">Agua</div><div class="nut-desc">Mínimo 2–2.5L al día. Más en días de entreno.</div></div>
+    </div>
+  </div>
+
+  <!-- ══ MOTIVACIÓN PANEL ══ -->
+  <div class="panel" id="panel-motivation">
+    <h2 class="section-title">💫 Motivación</h2>
+    <p class="section-sub">Porque los días difíciles son los que más cuentan.</p>
+
+    <div class="quote-card">
+      <div class="quote-emoji">🌸</div>
+      <p class="quote-text" id="quote-text">"No se trata de ser perfecta. Se trata de ser mejor que ayer."</p>
+      <button class="quote-btn" onclick="nextQuote()">Otra frase ✨</button>
+    </div>
+
+    <div class="reminder-card">
+      <h3>🗓 Recuérdalo cada semana</h3>
+      <div class="reminder-row">💬 Los resultados llegan antes de que te des cuenta. Confía en el proceso.</div>
+      <div class="reminder-row">💬 El peso en la báscula puede quedarse igual y aun así tu cuerpo estar cambiando.</div>
+      <div class="reminder-row">💬 Una sesión mala es mejor que ninguna sesión.</div>
+      <div class="reminder-row">💬 El progreso no es lineal. Habrá semanas mejores y peores. Sigue.</div>
+    </div>
+
+    <div class="recovery-card">
+      <h3>🌿 Recuperación</h3>
+      <div class="recovery-row">🛁 Baño de contraste calor/frío tras sesiones intensas de pierna.</div>
+      <div class="recovery-row">🧘 5 min de respiración profunda al terminar cada sesión.</div>
+      <div class="recovery-row">🌙 Estira siempre glúteos e isquios al acabar.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Hecho con ❤️ especialmente para ti</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const DAYS = [
+  {
+    id:1, name:"Lunes", label:"Glúteos & Isquios", emoji:"🍑",
+    color:"#d4607a", bg:"linear-gradient(135deg,#fce8ec,#fdf0f8)",
+    note: null,
+    exercises:[
+      { name:"Hip Thrust con barra",          sets:4, reps:"8–12", tip:"Pausa 1 seg arriba apretando glúteos. Barbilla al pecho. Empuja con los talones." },
+      { name:"Peso muerto rumano (RDL)",       sets:4, reps:"8–10", tip:"Empuja caderas hacia atrás. Siente el estiramiento en isquios. Baja lento (3 seg)." },
+      { name:"Curl femoral tumbado",           sets:3, reps:"10–12", tip:"Caderas pegadas al banco. Sube rápido, baja lento. Aprieta isquios arriba." },
+      { name:"Patada de glúteo en polea",      sets:3, reps:"12–15 c/lado", tip:"El movimiento nace de la cadera, no de la espalda. Pausa al final del recorrido." },
+      { name:"Abductor en máquina",            sets:3, reps:"15–20", tip:"Inclínate ligeramente adelante para sentir el glúteo, no la cadera lateral." },
+    ]
+  },
+  {
+    id:2, name:"Martes", label:"Tren Superior", emoji:"💪",
+    color:"#b08040", bg:"linear-gradient(135deg,#faf4e8,#fdf8f0)",
+    note:"Hoy entrenas con intensidad moderada — el objetivo es mantener, no fatigar.",
+    exercises:[
+      { name:"Jalón al pecho agarre neutro",   sets:3, reps:"12–15", tip:"Codos hacia abajo y atrás. Movimiento controlado. No te apresures." },
+      { name:"Remo en polea baja",             sets:3, reps:"12–15", tip:"Pecho erguido, retrae escápulas al tirar. Sin balanceo de torso." },
+      { name:"Press hombros con mancuernas",   sets:2, reps:"15", tip:"Core activado. Sin arquear la zona lumbar. Carga ligera y bien controlada." },
+      { name:"Elevaciones laterales",          sets:2, reps:"15–20", tip:"Codos ligeramente flexionados. Hasta la altura del hombro. Sin encoger." },
+      { name:"Fondos en banco (tríceps)",      sets:2, reps:"12–15", tip:"Codos hacia atrás. Sin bajar demasiado. Controlado y limpio." },
+    ]
+  },
+  {
+    id:3, name:"Miércoles", label:"Cuádriceps & Glúteos", emoji:"🦵",
+    color:"#5a8fa8", bg:"linear-gradient(135deg,#e8f4f8,#eef5fc)",
+    note: null,
+    exercises:[
+      { name:"Sentadilla con barra",           sets:4, reps:"6–10", tip:"Más profundidad = más glúteo. Rodillas siguen la línea de los pies. Sube explosiva." },
+      { name:"Bulgarian Split Squat",          sets:3, reps:"8–10 c/pierna", tip:"Pie delantero lejos. La rodilla delantera no pasa los dedos. Empuja con el talón." },
+      { name:"Prensa (pie alto y ancho)",      sets:3, reps:"10–12", tip:"Pies altos y separados = más glúteos. ROM completo. Rodillas sin bloquear." },
+      { name:"Extensión de cuádriceps",        sets:3, reps:"12–15", tip:"Sube rápido, baja en 3 seg lento. Siente el quemón en el músculo." },
+      { name:"Step-up con mancuerna",          sets:3, reps:"10 c/pierna", tip:"Empuja con el talón de la pierna de arriba, no con la de abajo." },
+    ]
+  },
+  {
+    id:4, name:"Jueves", label:"Descanso Activo", emoji:"🧘‍♀️",
+    color:"#5a9468", bg:"linear-gradient(135deg,#eaf5ec,#f0faf2)",
+    note: null, rest:true,
+    exercises:[
+      { name:"Caminata suave",                 sets:1, reps:"20–30 min", tip:"Ritmo cómodo. Ayuda a recuperar sin cansar." },
+      { name:"Estiramientos tren inferior",    sets:1, reps:"15 min", tip:"Glúteos, isquios y cuádriceps. 30–45 seg por posición. Sin forzar." },
+      { name:"Foam rolling piernas",           sets:1, reps:"10 min", tip:"Cuádriceps, glúteos y zonas tensas. Respira profundo." },
+    ]
+  },
+  {
+    id:5, name:"Viernes", label:"Glúteos + Core", emoji:"🔥",
+    color:"#a05ab0", bg:"linear-gradient(135deg,#f5e8fa,#fdf0f8)",
+    note: null,
+    exercises:[
+      { name:"Hip Thrust unilateral",          sets:3, reps:"10–12 c/lado", tip:"Pierna libre doblada 90°. Más difícil que con dos — mayor activación." },
+      { name:"Sentadilla sumo con mancuerna",  sets:3, reps:"12–15", tip:"Pies muy separados, puntas afuera. Empuja rodillas hacia afuera activamente." },
+      { name:"Zancada reversa con mancuernas", sets:3, reps:"10–12 c/pierna", tip:"Baja controlada, sube explosiva empujando con el talón delantero." },
+      { name:"Good morning con barra ligera",  sets:3, reps:"12–15", tip:"Bisagra de cadera pura. Siente el estiramiento de isquios al bajar. Carga ligera." },
+      { name:"Plancha lateral con abducción",  sets:3, reps:"12 c/lado", tip:"En plancha lateral levanta la pierna de arriba lentamente. Core activo todo el tiempo." },
+    ]
+  },
+];
+
+const QUOTES = [
+  "No se trata de ser perfecta. Se trata de ser mejor que ayer.",
+  "Cada repetición es una decisión. Cada sesión, una promesa.",
+  "Los días que menos quieres ir son los que más te construyen.",
+  "El esfuerzo de hoy es el cuerpo de mañana.",
+  "Tú misma te sorprenderás de lo que puedes llegar a hacer.",
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let activeDay = 0;
+let done = JSON.parse(localStorage.getItem('workout_done') || '{}');
+let quoteIdx = 0;
+
+const TOTAL_EX = DAYS.reduce((a,d) => a + d.exercises.length, 0);
+
+function saveDone() { localStorage.setItem('workout_done', JSON.stringify(done)); }
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const count = Object.values(done).filter(Boolean).length;
+  const pct   = Math.round(count / TOTAL_EX * 100);
+  document.getElementById('prog-count').textContent = `${count}/${TOTAL_EX}`;
+  document.getElementById('prog-fill').style.width  = `${pct}%`;
+  document.getElementById('prog-pct').textContent   = `${pct}% completado`;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── RENDER DAYS ──────────────────────────────────────────────────────────────
+function renderDays() {
+  const row = document.getElementById('days-row');
+  row.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-pill' + (i === activeDay ? ' active' : '');
+    if (i === activeDay) { btn.style.background = d.color; btn.style.boxShadow = `0 4px 14px ${d.color}55`; }
+    btn.innerHTML = `<div class="pill-emoji">${d.emoji}</div><div>${d.name}</div>`;
+    btn.onclick = () => { activeDay = i; renderDay(); };
+    row.appendChild(btn);
+  });
+}
+
+// ── RENDER DAY ────────────────────────────────────────────────────────────────
+function renderDay() {
+  renderDays();
+  const d   = DAYS[activeDay];
+  const hdr = document.getElementById('day-header-wrap');
+  hdr.innerHTML = `
+    <div class="day-header" style="background:${d.bg}; border-color:${d.color};">
+      <h2>${d.emoji} ${d.label}</h2>
+      <div class="sub">${d.name}</div>
+      ${d.note ? `<div class="note" style="color:${d.color};">💬 ${d.note}</div>` : ''}
+    </div>`;
+
+  const list = document.getElementById('ex-list');
+  list.innerHTML = '';
+  d.exercises.forEach((ex, i) => {
+    const k     = `${d.id}-${i}`;
+    const isDone = !!done[k];
+    const card   = document.createElement('div');
+    card.className = 'ex-card' + (isDone ? ' done' : '');
+    card.id = 'card-' + k;
+    card.innerHTML = `
+      <div class="ex-card-inner">
+        <div class="ex-left">
+          <div class="ex-name-row">
+            <span class="ex-num" style="background:${isDone?'#ccc':d.color}">${i+1}</span>
+            <span class="ex-name">${ex.name}</span>
+          </div>
+          <div class="ex-stats">
+            <div class="stat-pill" style="background:${d.color}18">
+              <div class="stat-val">${ex.sets}</div><div class="stat-lbl">Sets</div>
+            </div>
+            <div class="stat-pill" style="background:${d.color}18">
+              <div class="stat-val">${ex.reps}</div><div class="stat-lbl">Reps</div>
+            </div>
+          </div>
+          <div class="ex-tip">💡 ${ex.tip}</div>
+        </div>
+        <button class="check-btn ${isDone?'done':''}"
+                style="border-color:${isDone?'transparent':d.color+'80'}; background:${isDone?d.color:'transparent'}"
+                onclick="toggleDone('${k}','${d.color}',${i})">
+          ${isDone ? '✓' : ''}
+        </button>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  const note = document.getElementById('rest-note');
+  note.innerHTML = d.rest
+    ? `<div class="rest-card"><div style="font-size:28px">🌿</div><p>El descanso también entrena. Tu cuerpo lo necesita para crecer.</p></div>`
+    : '';
+}
+
+// ── TOGGLE DONE ──────────────────────────────────────────────────────────────
+function toggleDone(k, color, i) {
+  done[k] = !done[k];
+  saveDone();
+  updateProgress();
+  const card = document.getElementById('card-' + k);
+  const isDone = done[k];
+  card.classList.toggle('done', isDone);
+  const num = card.querySelector('.ex-num');
+  num.style.background = isDone ? '#ccc' : color;
+  const btn = card.querySelector('.check-btn');
+  btn.className = 'check-btn' + (isDone ? ' done' : '');
+  btn.style.borderColor = isDone ? 'transparent' : color + '80';
+  btn.style.background  = isDone ? color : 'transparent';
+  btn.textContent = isDone ? '✓' : '';
+}
+
+// ── QUOTES ───────────────────────────────────────────────────────────────────
+function nextQuote() {
+  quoteIdx = (quoteIdx + 1) % QUOTES.length;
+  document.getElementById('quote-text').textContent = `"${QUOTES[quoteIdx]}"`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderDay();
+updateProgress();
+</script>
+</body>
+</html>
